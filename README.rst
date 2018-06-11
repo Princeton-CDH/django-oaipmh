@@ -21,7 +21,7 @@ django-oaipmh
 
 **django-oaipmh** is intended to be a reusable `Django`_ application for
 providing content to be harvested via the `Open Archives Initiative Protocol for
-Metadata Harvesting`_ (OAI-PMH).
+Metadata Harvesting`_ (OAI-PMH) version 2.0.
 
 .. _Django: https://www.djangoproject.com/
 .. _Open Archives Initiative Protocol for Metadata Harvesting: https://www.openarchives.org/pmh/
@@ -99,14 +99,9 @@ configurations.
 
     cp ci/testsettings.py testsettings.py
 
-- To run the tests, either use the configured setup.py test command::
+- To run the tests::
 
-    python setup.py test
-
-- Or install test requirements and use py.test directly::
-
-    pip install -e '.[test]'
-    py.test
+    python -m pytest
 
 OAI provider implementations can be tested using the OAI Repository Explorer 
 (perhaps no longer available?)

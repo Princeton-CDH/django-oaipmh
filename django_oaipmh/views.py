@@ -1,10 +1,11 @@
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.views.generic import TemplateView
+from django.http import HttpResponse
 
 
 class OAIProvider(TemplateView):
-    content_type = 'text/xml'  # possibly application/xml ?
+    content_type = 'text/xml'
+    http_method_names = ['get', 'post']
 
     # modeling on sitemaps: these methods should be implemented
     # when extending OAIProvider
@@ -19,11 +20,6 @@ class OAIProvider(TemplateView):
     def last_modified(self, obj):
         # datetime object was last modified
         pass
-
-    def oai_identifier(self, obj):
-        # oai identifier for a given object
-        return 'oai:%s:%s' % (Site.objects.get_current().domain,
-                              obj.get_absolute_url())
 
     def sets(self, obj):
         # list of set identifiers for a given object
@@ -91,9 +87,14 @@ class OAIProvider(TemplateView):
             'error': text,
         })
 
+    def post(self, request, *args, **kwargs):
+        # TODO implement
+        return HttpResponse('succesful POST')        
+
     # HTTP GET request: determine OAI verb and hand off to appropriate
     # method
     def get(self, request, *args, **kwargs):
+        return HttpResponse('succesful GET')
         self.request = request   # store for access in other functions
 
         self.oai_verb = request.GET.get('verb', None)
