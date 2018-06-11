@@ -33,3 +33,19 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+# Visual Studio Code
+.vscode
+
+# Pytest cache files
+.pytest_cache
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# virtualenv
+.venv
+venv/
+ENV/

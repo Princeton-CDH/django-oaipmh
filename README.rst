@@ -3,6 +3,7 @@ django-oaipmh
 
 OAI-PMH provider for django sites
 
+Based on prototype code from `Emory University Libraries <https://github.com/emory-libraries/django-oaipmh>`_.
 
 Intended to be extended similar to django.contrib.sitemaps
 
