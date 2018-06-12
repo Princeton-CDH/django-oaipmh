@@ -1,46 +1,71 @@
-from django.conf import settings
-from django.views.generic import TemplateView
-from django.http import HttpResponse
+'''
+Views used to render OAI-PMH response XML.
+'''
 
+from inflection import underscore
+from django.conf import settings
+from django.views.generic.base import TemplateView
+
+from django_oaipmh import exceptions as OaiPmhExceptions
 
 class OAIProvider(TemplateView):
     content_type = 'text/xml'
     http_method_names = ['get', 'post']
+    template_name = 'django_oaipmh/base.xml'
 
-    # modeling on sitemaps: these methods should be implemented
-    # when extending OAIProvider
+    OAI_VERBS = [
+        'Identify',
+        'GetRecord',
+        'ListIdentifiers',
+        'ListMetadataFormats',
+        'ListRecords',
+        'ListSets'
+    ]
 
-    def items(self):
+    def dispatch(self, request, *args, **kwargs):
+        '''Pass control to HTTP methods & handle errors.'''
+        try:
+            return super().dispatch(request, *args, **kwargs)
+        except OaiPmhExceptions.OaiPmhException as error:
+            return self.error(request, error)
+
+    def get(self, request, *args, **kwargs):
+        '''Parse GET parameters and send them to `:meth:delegate()`.'''
+        request.verb = request.GET.get('verb', None)
+        return self.delegate(request, *args, **kwargs) 
+
+    def post(self, request, *args, **kwargs):
+        '''Parse POST parameters and send them to `:meth:delegate()`.'''
+        request.verb = request.POST.get('verb', None)
+        return self.delegate(request, *args, **kwargs)   
+
+    def delegate(self, request, *args, **kwargs):
+        '''Determine the OAI-PMH verb and pass to the appropriate handler.'''
+        if request.verb is None:
+            raise OaiPmhExceptions.BadVerb('Verb is required.')
+        if request.verb not in self.OAI_VERBS:
+            raise OaiPmhExceptions.BadVerb('Invalid verb.')
+        return getattr(self, underscore(request.verb))(request, *args, **kwargs)
+
+    def error(self, request, error):
+        self.template_name = 'django_oaipmh/error.xml'
+        url = request.scheme + '://' + request.META['HTTP_HOST'] + request.path
+        context = {
+            'code': error.code,
+            'message': str(error),
+            'verb': request.verb,
+            'url': url
+        }
+        return self.render_to_response(context)
+
+    def get_queryset(self):
         # list/generator/queryset of items to be made available via oai
         # NOTE: this will probably have other optional parameters,
         # e.g. filter by set or date modified
         # - could possibly include find by id for GetRecord here also...
         pass
 
-    def last_modified(self, obj):
-        # datetime object was last modified
-        pass
-
-    def sets(self, obj):
-        # list of set identifiers for a given object
-        return []
-
-    # TODO: get metadata record for a given object in a given metadata format
-
-    def render_to_response(self, context, **response_kwargs):
-        # all OAI responses should be xml
-        if 'content_type' not in response_kwargs:
-            response_kwargs['content_type'] = self.content_type
-
-        # add common context data needed for all responses
-        context.update({
-            'verb': self.oai_verb,
-            'url': self.request.build_absolute_uri(self.request.path),
-        })
-        return super(TemplateView, self) \
-            .render_to_response(context, **response_kwargs)
-
-    def identify(self):
+    def identify(self, request):
         self.template_name = 'django_oaipmh/identify.xml'
         # TODO: these should probably be class variables/configurations
         # that extending classes could set
@@ -64,62 +89,29 @@ class OAIProvider(TemplateView):
         }
         return self.render_to_response(identify_data)
 
-    def list_identifiers(self):
-        self.template_name = 'django_oaipmh/list_identifiers.xml'
-        items = []
-        # TODO: eventually we will need pagination with oai resumption tokens
-        # should be able to model similar to django.contrib.sitemap
-        for i in self.items():
-            item_info = {
-                'identifier': self.oai_identifier(i),
-                'last_modified': self.last_modified(i),
-                'sets': self.sets(i)
-            }
-            items.append(item_info)
-        return self.render_to_response({'items': items})
+    def list_identifiers(self, request):
+        raise NotImplementedError
+        # self.template_name = 'django_oaipmh/list_identifiers.xml'
+        # items = []
+        # # TODO: eventually we will need pagination with oai resumption tokens
+        # # should be able to model similar to django.contrib.sitemap
+        # for i in self.items():
+        #     item_info = {
+        #         'identifier': self.oai_identifier(i),
+        #         'last_modified': self.last_modified(i),
+        #         'sets': self.sets(i)
+        #     }
+        #     items.append(item_info)
+        # return self.render_to_response({'items': items})
 
-    def error(self, code, text):
-        # TODO: HTTP error response code? maybe 400 bad request?
-        # NOTE: may need to revise, could have multiple error codes/messages
-        self.template_name = 'django_oaipmh/error.xml'
-        return self.render_to_response({
-            'error_code': code,
-            'error': text,
-        })
+    def get_record(self, request):
+        raise NotImplementedError
 
-    def post(self, request, *args, **kwargs):
-        # TODO implement
-        return HttpResponse('succesful POST')        
+    def list_metadata_formats(self, request):
+        raise NotImplementedError
 
-    # HTTP GET request: determine OAI verb and hand off to appropriate
-    # method
-    def get(self, request, *args, **kwargs):
-        return HttpResponse('succesful GET')
-        self.request = request   # store for access in other functions
+    def list_records(self, request):
+        raise NotImplementedError
 
-        self.oai_verb = request.GET.get('verb', None)
-
-        if self.oai_verb == 'Identify':
-            return self.identify()
-
-        if self.oai_verb == 'ListIdentifiers':
-            return self.list_identifiers()
-
-        # OAI verbs still TODO:
-        #
-        # GetRecord
-        #  - will probably require an item_by_id method similar items
-        # ListMetadataFormats
-        # ListRecords
-        #  - should have some overlap/reusability with ListIdentifiers
-        # ListSets
-        #  - could start with noSetHierarchy in initial implementation
-
-        else:
-            # if no verb = bad request response
-
-            if self.oai_verb is None:
-                error_msg = 'The request did not provide any verb.'
-            else:
-                'The verb "%s" is illegal' % self.oai_verb
-            return self.error('badVerb', error_msg)
+    def list_sets(self, request):
+        raise NotImplementedError
