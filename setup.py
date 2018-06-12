@@ -21,7 +21,8 @@ setup(
     long_description_content_type='text/x-rst',
     url='https://github.com/Princeton-CDH/django-oaipmh',
     install_requires=[
-        'django'
+        'django',
+        'inflection'
     ],
     tests_require=TEST_REQUIREMENTS,
     extras_require={
