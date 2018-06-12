@@ -153,13 +153,18 @@
 <span class="kn">from</span> <span class="nn">inflection</span> <span class="k">import</span> <span class="n">underscore</span>
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="k">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">django.views.generic.base</span> <span class="k">import</span> <span class="n">TemplateView</span>
+<span class="kn">from</span> <span class="nn">django.contrib.sites.shortcuts</span> <span class="k">import</span> <span class="n">get_current_site</span>
 
-<span class="kn">from</span> <span class="nn">django_oaipmh</span> <span class="k">import</span> <span class="n">exceptions</span> <span class="k">as</span> <span class="n">OAIPMHExceptions</span>
+<span class="kn">from</span> <span class="nn">django_oaipmh.exceptions</span> <span class="k">import</span> <span class="n">OAIPMHException</span><span class="p">,</span> <span class="n">BadVerb</span>
 
 <div class="viewcode-block" id="OAIProvider"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.views.OAIProvider">[docs]</a><span class="k">class</span> <span class="nc">OAIProvider</span><span class="p">(</span><span class="n">TemplateView</span><span class="p">):</span>
     <span class="n">content_type</span> <span class="o">=</span> <span class="s1">&#39;text/xml&#39;</span>
     <span class="n">http_method_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;get&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">]</span>
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">&#39;django_oaipmh/base.xml&#39;</span>
+    <span class="n">repository_name</span> <span class="o">=</span> <span class="s1">&#39;My OAI-PMH Repository&#39;</span>
+    <span class="n">admin_emails</span> <span class="o">=</span> <span class="p">(</span><span class="n">email</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">email</span> <span class="ow">in</span> <span class="n">settings</span><span class="o">.</span><span class="n">ADMINS</span><span class="p">)</span>
+    <span class="n">deleted_record</span> <span class="o">=</span> <span class="s1">&#39;no&#39;</span>
+    <span class="n">granularity</span> <span class="o">=</span> <span class="s1">&#39;YYYY-MM-DDThh:mm:ssZ&#39;</span>
 
     <span class="n">OAI_VERBS</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s1">&#39;Identify&#39;</span><span class="p">,</span>
@@ -170,76 +175,99 @@
         <span class="s1">&#39;ListSets&#39;</span>
     <span class="p">]</span>
 
+    <span class="n">DELETED_RECORD_STRATEGIES</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;no&#39;</span><span class="p">,</span> <span class="s1">&#39;transient&#39;</span><span class="p">,</span> <span class="s1">&#39;persistent&#39;</span><span class="p">]</span>
+
+    <span class="n">GRANULARITIES</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;YYYY-MM-DD&#39;</span><span class="p">,</span> <span class="s1">&#39;YYYY-MM-DDThh:mm:ssZ&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Call :meth:`validate_config()` and initialize the view.&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_config</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="OAIProvider.validate_config"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.views.OAIProvider.validate_config">[docs]</a>    <span class="k">def</span> <span class="nf">validate_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Check that the provider configuration is valid.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">deleted_record</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">DELETED_RECORD_STRATEGIES</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">OAIPMHException</span><span class="p">(</span><span class="s1">&#39;Invalid value for deleted_record.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">granularity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">GRANULARITIES</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">OAIPMHException</span><span class="p">(</span><span class="s1">&#39;Invalid value for granularity.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
 <div class="viewcode-block" id="OAIProvider.dispatch"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.views.OAIProvider.dispatch">[docs]</a>    <span class="k">def</span> <span class="nf">dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Call :meth:`get()` or :meth:`post()` &amp; handle errors with :meth:`error()`.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Call :meth:`get()` or :meth:`post()` &amp; handle errors with</span>
+<span class="sd">        :meth:`error()`.&#39;&#39;&#39;</span>
+        <span class="c1"># save request for use in other functions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span> <span class="o">=</span> <span class="n">request</span>
+        <span class="c1"># request URL is needed for every response</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">build_absolute_uri</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+        <span class="c1"># create context to pass to handlers to modify</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">context</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">}</span>
+        <span class="c1"># handle errors</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">OAIPMHExceptions</span><span class="o">.</span><span class="n">OAIPMHException</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span></div>
+        <span class="k">except</span> <span class="n">OAIPMHException</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">error</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="OAIProvider.get"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.views.OAIProvider.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Parse GET parameters and send them to :meth:`delegate()`.&#39;&#39;&#39;</span>
-        <span class="n">request</span><span class="o">.</span><span class="n">verb</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verb&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">delegate</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+        <span class="n">verb</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verb&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">delegate</span><span class="p">(</span><span class="n">verb</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="OAIProvider.post"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.views.OAIProvider.post">[docs]</a>    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Parse POST parameters and send them to :meth:`delegate()`.&#39;&#39;&#39;</span>
-        <span class="n">request</span><span class="o">.</span><span class="n">verb</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verb&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">delegate</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>   </div>
+        <span class="n">verb</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verb&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">delegate</span><span class="p">(</span><span class="n">verb</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="OAIProvider.delegate"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.views.OAIProvider.delegate">[docs]</a>    <span class="k">def</span> <span class="nf">delegate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Determine the OAI-PMH verb and pass to the appropriate handler.&#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">verb</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">OAIPMHExceptions</span><span class="o">.</span><span class="n">BadVerb</span><span class="p">(</span><span class="s1">&#39;Verb is required.&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">verb</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">OAI_VERBS</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">OAIPMHExceptions</span><span class="o">.</span><span class="n">BadVerb</span><span class="p">(</span><span class="s1">&#39;Invalid verb.&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">underscore</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">verb</span><span class="p">))(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">error</span><span class="p">):</span>
+<div class="viewcode-block" id="OAIProvider.delegate"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.views.OAIProvider.delegate">[docs]</a>    <span class="k">def</span> <span class="nf">delegate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verb</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Determine the verb, add it to the context and pass to the appropriate</span>
+<span class="sd">        handler.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">verb</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">BadVerb</span><span class="p">(</span><span class="s1">&#39;Verb is required.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verb</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">OAI_VERBS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">BadVerb</span><span class="p">(</span><span class="s1">&#39;Invalid verb.&#39;</span><span class="p">)</span>
+        <span class="c1"># add the verb to the context</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;verb&#39;</span><span class="p">:</span> <span class="n">verb</span><span class="p">})</span>
+        <span class="c1"># convert CamelCase verb name to underscore method name and call it</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">underscore</span><span class="p">(</span><span class="n">verb</span><span class="p">))()</span></div>
+
+
+    <span class="k">def</span> <span class="nf">error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">template_name</span> <span class="o">=</span> <span class="s1">&#39;django_oaipmh/error.xml&#39;</span>
-        <span class="n">url</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">scheme</span> <span class="o">+</span> <span class="s1">&#39;://&#39;</span> <span class="o">+</span> <span class="n">request</span><span class="o">.</span><span class="n">META</span><span class="p">[</span><span class="s1">&#39;HTTP_HOST&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span>
-        <span class="n">context</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
             <span class="s1">&#39;code&#39;</span><span class="p">:</span> <span class="n">error</span><span class="o">.</span><span class="n">code</span><span class="p">,</span>
-            <span class="s1">&#39;message&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">),</span>
-            <span class="s1">&#39;verb&#39;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">verb</span><span class="p">,</span>
-            <span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="n">url</span>
-        <span class="p">}</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_to_response</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+            <span class="s1">&#39;message&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+        <span class="p">})</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_to_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">)</span>
+
 
     <span class="k">def</span> <span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># list/generator/queryset of items to be made available via oai</span>
-        <span class="c1"># NOTE: this will probably have other optional parameters,</span>
-        <span class="c1"># e.g. filter by set or date modified</span>
-        <span class="c1"># - could possibly include find by id for GetRecord here also...</span>
-        <span class="k">pass</span>
+        <span class="k">return</span> <span class="p">[]</span>
 
-    <span class="k">def</span> <span class="nf">identify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">identify</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># TODO there are also &lt;description&gt; containers which can live here.</span>
+        <span class="c1"># TODO support for compression algorithms:</span>
+        <span class="c1"># https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Encoding</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">template_name</span> <span class="o">=</span> <span class="s1">&#39;django_oaipmh/identify.xml&#39;</span>
-        <span class="c1"># TODO: these should probably be class variables/configurations</span>
-        <span class="c1"># that extending classes could set</span>
-        <span class="n">identify_data</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;oai repo name&#39;</span><span class="p">,</span>
-            <span class="c1"># perhaps an oai_admins method with default logic settings.admins?</span>
-            <span class="s1">&#39;admins&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">email</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">email</span> <span class="ow">in</span> <span class="n">settings</span><span class="o">.</span><span class="n">ADMINS</span><span class="p">),</span>
-            <span class="s1">&#39;earliest_date&#39;</span><span class="p">:</span> <span class="s1">&#39;1990-02-01T12:00:00Z&#39;</span><span class="p">,</span>   <span class="c1"># placeholder</span>
-            <span class="c1"># should probably be a class variable/configuration</span>
-            <span class="s1">&#39;deleted&#39;</span><span class="p">:</span> <span class="s1">&#39;no&#39;</span><span class="p">,</span>  <span class="c1"># no, transient, persistent (?)</span>
-            <span class="c1"># class-level variable/configuration (may affect templates also)</span>
-            <span class="s1">&#39;granularity&#39;</span><span class="p">:</span> <span class="s1">&#39;YYYY-MM-DDThh:mm:ssZ&#39;</span><span class="p">,</span>  <span class="c1"># or YYYY-MM-DD</span>
-            <span class="c1"># class-level config?</span>
-            <span class="s1">&#39;compression&#39;</span><span class="p">:</span> <span class="s1">&#39;deflate&#39;</span><span class="p">,</span>  <span class="c1"># gzip?  - optional</span>
-            <span class="c1"># description - optional</span>
-            <span class="c1"># (place-holder values from OAI docs example)</span>
-            <span class="s1">&#39;identifier_scheme&#39;</span><span class="p">:</span> <span class="s1">&#39;oai&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;repository_identifier&#39;</span><span class="p">:</span> <span class="s1">&#39;lcoa1.loc.gov&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;identifier_delimiter&#39;</span><span class="p">:</span> <span class="s1">&#39;:&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;sample_identifier&#39;</span><span class="p">:</span> <span class="s1">&#39;oai:lcoa1.loc.gov:loc.music/musdi.002&#39;</span>
-        <span class="p">}</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_to_response</span><span class="p">(</span><span class="n">identify_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+            <span class="s1">&#39;repositoryName&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">repository_name</span><span class="p">,</span>
+            <span class="s1">&#39;baseUrl&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">,</span>
+            <span class="s1">&#39;adminEmails&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">admin_emails</span><span class="p">,</span>
+            <span class="s1">&#39;earliestDatestamp&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="c1">#TODO derive from queryset</span>
+            <span class="s1">&#39;deletedRecord&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">deleted_record</span><span class="p">,</span>
+            <span class="s1">&#39;granularity&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">granularity</span>
+        <span class="p">})</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_to_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">list_identifiers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-        <span class="c1"># self.template_name = &#39;django_oaipmh/list_identifiers.xml&#39;</span>
+
+    <span class="k">def</span> <span class="nf">list_identifiers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">template_name</span> <span class="o">=</span> <span class="s1">&#39;django_oaipmh/list_identifiers.xml&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_to_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">)</span>
+
         <span class="c1"># items = []</span>
         <span class="c1"># # TODO: eventually we will need pagination with oai resumption tokens</span>
         <span class="c1"># # should be able to model similar to django.contrib.sitemap</span>
@@ -252,16 +280,16 @@
         <span class="c1">#     items.append(item_info)</span>
         <span class="c1"># return self.render_to_response({&#39;items&#39;: items})</span>
 
-    <span class="k">def</span> <span class="nf">get_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">get_record</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
-    <span class="k">def</span> <span class="nf">list_metadata_formats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">list_metadata_formats</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
-    <span class="k">def</span> <span class="nf">list_records</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">list_records</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
-    <span class="k">def</span> <span class="nf">list_sets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">list_sets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 </pre></div>
 

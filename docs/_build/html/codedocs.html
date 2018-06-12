@@ -28,7 +28,7 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Welcome to django-oaipmh’s documentation!" href="index.html" /> 
+    <link rel="prev" title="django-oaipmh documentation" href="index.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -160,17 +160,19 @@
 <p>Views used to render OAI-PMH response XML.</p>
 <dl class="class">
 <dt id="django_oaipmh.views.OAIProvider">
-<em class="property">class </em><code class="descclassname">django_oaipmh.views.</code><code class="descname">OAIProvider</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/django_oaipmh/views.html#OAIProvider"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.views.OAIProvider" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">django_oaipmh.views.</code><code class="descname">OAIProvider</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/django_oaipmh/views.html#OAIProvider"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.views.OAIProvider" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="django_oaipmh.views.OAIProvider.delegate">
-<code class="descname">delegate</code><span class="sig-paren">(</span><em>request</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/django_oaipmh/views.html#OAIProvider.delegate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.views.OAIProvider.delegate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Determine the OAI-PMH verb and pass to the appropriate handler.</p>
+<code class="descname">delegate</code><span class="sig-paren">(</span><em>verb</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/django_oaipmh/views.html#OAIProvider.delegate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.views.OAIProvider.delegate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine the verb, add it to the context and pass to the appropriate
+handler.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="django_oaipmh.views.OAIProvider.dispatch">
 <code class="descname">dispatch</code><span class="sig-paren">(</span><em>request</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/django_oaipmh/views.html#OAIProvider.dispatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.views.OAIProvider.dispatch" title="Permalink to this definition">¶</a></dt>
-<dd><p>Call <a class="reference internal" href="#django_oaipmh.views.OAIProvider.get" title="django_oaipmh.views.OAIProvider.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get()</span></code></a> or <a class="reference internal" href="#django_oaipmh.views.OAIProvider.post" title="django_oaipmh.views.OAIProvider.post"><code class="xref py py-meth docutils literal notranslate"><span class="pre">post()</span></code></a> &amp; handle errors with <code class="xref py py-meth docutils literal notranslate"><span class="pre">error()</span></code>.</p>
+<dd><p>Call <a class="reference internal" href="#django_oaipmh.views.OAIProvider.get" title="django_oaipmh.views.OAIProvider.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get()</span></code></a> or <a class="reference internal" href="#django_oaipmh.views.OAIProvider.post" title="django_oaipmh.views.OAIProvider.post"><code class="xref py py-meth docutils literal notranslate"><span class="pre">post()</span></code></a> &amp; handle errors with
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">error()</span></code>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -183,6 +185,12 @@
 <dt id="django_oaipmh.views.OAIProvider.post">
 <code class="descname">post</code><span class="sig-paren">(</span><em>request</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/django_oaipmh/views.html#OAIProvider.post"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.views.OAIProvider.post" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parse POST parameters and send them to <a class="reference internal" href="#django_oaipmh.views.OAIProvider.delegate" title="django_oaipmh.views.OAIProvider.delegate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">delegate()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="django_oaipmh.views.OAIProvider.validate_config">
+<code class="descname">validate_config</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/django_oaipmh/views.html#OAIProvider.validate_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.views.OAIProvider.validate_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check that the provider configuration is valid.</p>
 </dd></dl>
 
 </dd></dl>
@@ -199,7 +207,7 @@
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
       
-        <a href="index.html" class="btn btn-neutral" title="Welcome to django-oaipmh’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="index.html" class="btn btn-neutral" title="django-oaipmh documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
