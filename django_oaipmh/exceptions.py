@@ -3,11 +3,11 @@ Exception subclasses specific to OAI-PMH.
 http://www.openarchives.org/OAI/openarchivesprotocol.html#ErrorConditions
 '''
 
-class OaiPmhException(Exception):
+class OAIPMHException(Exception):
     pass
 
 
-class BadArgument(OaiPmhException):
+class BadArgument(OAIPMHException):
     code = 'badArgument'
     message = '''
     The request includes illegal arguments, is missing required arguments, 
@@ -16,12 +16,12 @@ class BadArgument(OaiPmhException):
     '''
 
 
-class BadResumptionToken(OaiPmhException):
+class BadResumptionToken(OAIPMHException):
     code = 'badResumptionToken'
     message = 'The value of the resumptionToken argument is invalid or expired.'
 
 
-class BadVerb(OaiPmhException):
+class BadVerb(OAIPMHException):
     code = 'badVerb'
     message = '''
     Value of the verb argument is not a legal OAI-PMH verb, the verb
@@ -29,7 +29,7 @@ class BadVerb(OaiPmhException):
     '''
 
 
-class CannotDisseminateFormat(OaiPmhException):
+class CannotDisseminateFormat(OAIPMHException):
     code = 'cannotDisseminateFormat'
     message = '''
     The metadata format identified by the value given for the metadataPrefix
@@ -37,7 +37,7 @@ class CannotDisseminateFormat(OaiPmhException):
     '''
 
 
-class IdDoesNotExist(OaiPmhException):
+class IdDoesNotExist(OAIPMHException):
     code = 'idDoesNotExist'
     message = '''
     The value of the identifier argument is unknown or illegal in this 
@@ -45,7 +45,7 @@ class IdDoesNotExist(OaiPmhException):
     '''
 
 
-class NoRecordsMatch(OaiPmhException):
+class NoRecordsMatch(OAIPMHException):
     code = 'noRecordsMatch'
     message = '''
     The combination of the values of the from, until, set and metadataPrefix 
@@ -53,12 +53,12 @@ class NoRecordsMatch(OaiPmhException):
     '''
 
 
-class NoMetadataFormats(OaiPmhException):
+class NoMetadataFormats(OAIPMHException):
     code = 'noMetadataFormats'
     message = 'There are no metadata formats available for the specified item.'
 
 
-class NoSetHierarchy(OaiPmhException):
+class NoSetHierarchy(OAIPMHException):
     code = 'noSetHierarchy'
     message = 'The repository does not support sets.'
 

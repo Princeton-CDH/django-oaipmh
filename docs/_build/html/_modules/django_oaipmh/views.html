@@ -154,7 +154,7 @@
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="k">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">django.views.generic.base</span> <span class="k">import</span> <span class="n">TemplateView</span>
 
-<span class="kn">from</span> <span class="nn">django_oaipmh</span> <span class="k">import</span> <span class="n">exceptions</span> <span class="k">as</span> <span class="n">OaiPmhExceptions</span>
+<span class="kn">from</span> <span class="nn">django_oaipmh</span> <span class="k">import</span> <span class="n">exceptions</span> <span class="k">as</span> <span class="n">OAIPMHExceptions</span>
 
 <div class="viewcode-block" id="OAIProvider"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.views.OAIProvider">[docs]</a><span class="k">class</span> <span class="nc">OAIProvider</span><span class="p">(</span><span class="n">TemplateView</span><span class="p">):</span>
     <span class="n">content_type</span> <span class="o">=</span> <span class="s1">&#39;text/xml&#39;</span>
@@ -174,7 +174,7 @@
         <span class="sd">&#39;&#39;&#39;Call :meth:`get()` or :meth:`post()` &amp; handle errors with :meth:`error()`.&#39;&#39;&#39;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">OaiPmhExceptions</span><span class="o">.</span><span class="n">OaiPmhException</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+        <span class="k">except</span> <span class="n">OAIPMHExceptions</span><span class="o">.</span><span class="n">OAIPMHException</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="OAIProvider.get"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.views.OAIProvider.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -190,9 +190,9 @@
 <div class="viewcode-block" id="OAIProvider.delegate"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.views.OAIProvider.delegate">[docs]</a>    <span class="k">def</span> <span class="nf">delegate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Determine the OAI-PMH verb and pass to the appropriate handler.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">verb</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">OaiPmhExceptions</span><span class="o">.</span><span class="n">BadVerb</span><span class="p">(</span><span class="s1">&#39;Verb is required.&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">OAIPMHExceptions</span><span class="o">.</span><span class="n">BadVerb</span><span class="p">(</span><span class="s1">&#39;Verb is required.&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">verb</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">OAI_VERBS</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">OaiPmhExceptions</span><span class="o">.</span><span class="n">BadVerb</span><span class="p">(</span><span class="s1">&#39;Invalid verb.&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">OAIPMHExceptions</span><span class="o">.</span><span class="n">BadVerb</span><span class="p">(</span><span class="s1">&#39;Invalid verb.&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">underscore</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">verb</span><span class="p">))(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">error</span><span class="p">):</span>

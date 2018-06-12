@@ -5,13 +5,18 @@ Views used to render OAI-PMH response XML.
 from inflection import underscore
 from django.conf import settings
 from django.views.generic.base import TemplateView
+from django.contrib.sites.shortcuts import get_current_site
 
-from django_oaipmh import exceptions as OaiPmhExceptions
+from django_oaipmh.exceptions import OAIPMHException, BadVerb
 
 class OAIProvider(TemplateView):
     content_type = 'text/xml'
     http_method_names = ['get', 'post']
     template_name = 'django_oaipmh/base.xml'
+    repository_name = 'My OAI-PMH Repository'
+    admin_emails = (email for name, email in settings.ADMINS)
+    deleted_record = 'no'
+    granularity = 'YYYY-MM-DDThh:mm:ssZ'
 
     OAI_VERBS = [
         'Identify',
@@ -22,76 +27,99 @@ class OAIProvider(TemplateView):
         'ListSets'
     ]
 
+    DELETED_RECORD_STRATEGIES = ['no', 'transient', 'persistent']
+
+    GRANULARITIES = ['YYYY-MM-DD', 'YYYY-MM-DDThh:mm:ssZ']
+
+    def __init__(self, *args, **kwargs):
+        '''Call :meth:`validate_config()` and initialize the view.'''
+        self.validate_config()
+        super().__init__(*args, **kwargs)
+
+
+    def validate_config(self):
+        '''Check that the provider configuration is valid.'''
+        if self.deleted_record not in self.DELETED_RECORD_STRATEGIES:
+            raise OAIPMHException('Invalid value for deleted_record.')
+        if self.granularity not in self.GRANULARITIES:
+            raise OAIPMHException('Invalid value for granularity.')
+        return True
+
+
     def dispatch(self, request, *args, **kwargs):
-        '''Call :meth:`get()` or :meth:`post()` & handle errors with :meth:`error()`.'''
+        '''Call :meth:`get()` or :meth:`post()` & handle errors with
+        :meth:`error()`.'''
+        # save request for use in other functions
+        self.request = request
+        # request URL is needed for every response
+        url = self.request.build_absolute_uri(self.request.path)
+        # create context to pass to handlers to modify
+        self.context = {'url': url}
+        # handle errors
         try:
             return super().dispatch(request, *args, **kwargs)
-        except OaiPmhExceptions.OaiPmhException as error:
-            return self.error(request, error)
+        except OAIPMHException as error:
+            return self.error(error)
+
 
     def get(self, request, *args, **kwargs):
         '''Parse GET parameters and send them to :meth:`delegate()`.'''
-        request.verb = request.GET.get('verb', None)
-        return self.delegate(request, *args, **kwargs)
+        verb = request.GET.get('verb', None)
+        return self.delegate(verb)
+
 
     def post(self, request, *args, **kwargs):
         '''Parse POST parameters and send them to :meth:`delegate()`.'''
-        request.verb = request.POST.get('verb', None)
-        return self.delegate(request, *args, **kwargs)   
+        verb = request.POST.get('verb', None)
+        return self.delegate(verb)
 
-    def delegate(self, request, *args, **kwargs):
-        '''Determine the OAI-PMH verb and pass to the appropriate handler.'''
-        if request.verb is None:
-            raise OaiPmhExceptions.BadVerb('Verb is required.')
-        if request.verb not in self.OAI_VERBS:
-            raise OaiPmhExceptions.BadVerb('Invalid verb.')
-        return getattr(self, underscore(request.verb))(request, *args, **kwargs)
 
-    def error(self, request, error):
+    def delegate(self, verb):
+        '''Determine the verb, add it to the context and pass to the appropriate
+        handler.'''
+        if verb is None:
+            raise BadVerb('Verb is required.')
+        if verb not in self.OAI_VERBS:
+            raise BadVerb('Invalid verb.')
+        # add the verb to the context
+        self.context.update({'verb': verb})
+        # convert CamelCase verb name to underscore method name and call it
+        return getattr(self, underscore(verb))()
+
+
+    def error(self, error):
         self.template_name = 'django_oaipmh/error.xml'
-        url = request.scheme + '://' + request.META['HTTP_HOST'] + request.path
-        context = {
+        self.context.update({
             'code': error.code,
-            'message': str(error),
-            'verb': request.verb,
-            'url': url
-        }
-        return self.render_to_response(context)
+            'message': str(error)
+        })
+        return self.render_to_response(self.context)
+
 
     def get_queryset(self):
-        # list/generator/queryset of items to be made available via oai
-        # NOTE: this will probably have other optional parameters,
-        # e.g. filter by set or date modified
-        # - could possibly include find by id for GetRecord here also...
-        pass
+        return []
 
-    def identify(self, request):
+
+    def identify(self):
         self.template_name = 'django_oaipmh/identify.xml'
-        # TODO: these should probably be class variables/configurations
-        # that extending classes could set
-        identify_data = {
-            'name': 'oai repo name',
-            # perhaps an oai_admins method with default logic settings.admins?
-            'admins': (email for name, email in settings.ADMINS),
-            'earliest_date': '1990-02-01T12:00:00Z',   # placeholder
-            # should probably be a class variable/configuration
-            'deleted': 'no',  # no, transient, persistent (?)
-            # class-level variable/configuration (may affect templates also)
-            'granularity': 'YYYY-MM-DDThh:mm:ssZ',  # or YYYY-MM-DD
-            # class-level config?
-            'compression': 'deflate',  # gzip?  - optional
-            # description - optional
-            # (place-holder values from OAI docs example)
-            'identifier_scheme': 'oai',
-            'repository_identifier': 'lcoa1.loc.gov',
-            'identifier_delimiter': ':',
-            'sample_identifier': 'oai:lcoa1.loc.gov:loc.music/musdi.002'
-        }
-        return self.render_to_response(identify_data)
+        self.context.update({
+            'repositoryName': self.repository_name,
+            'adminEmails': self.admin_emails,
+            'earliestDatestamp': None,
+            'deletedRecord': self.deleted_record,
+            'granularity': self.granularity,
+            'identifierScheme': None,
+            'repositoryIdentifier': None,
+            'identifierDelimiter': None,
+            'sampleIdentifier': None
+        })
+        return self.render_to_response(self.context)
 
-    def list_identifiers(self, request):
-        raise NotImplementedError
-        # self.template_name = 'django_oaipmh/list_identifiers.xml'
+
+    def list_identifiers(self):
+        self.template_name = 'django_oaipmh/list_identifiers.xml'
+        return self.render_to_response(self.context)
+
         # items = []
         # # TODO: eventually we will need pagination with oai resumption tokens
         # # should be able to model similar to django.contrib.sitemap
@@ -104,14 +132,14 @@ class OAIProvider(TemplateView):
         #     items.append(item_info)
         # return self.render_to_response({'items': items})
 
-    def get_record(self, request):
+    def get_record(self):
         raise NotImplementedError
 
-    def list_metadata_formats(self, request):
+    def list_metadata_formats(self):
         raise NotImplementedError
 
-    def list_records(self, request):
+    def list_records(self):
         raise NotImplementedError
 
-    def list_sets(self, request):
+    def list_sets(self):
         raise NotImplementedError
