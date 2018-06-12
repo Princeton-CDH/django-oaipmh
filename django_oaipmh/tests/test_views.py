@@ -71,9 +71,7 @@ class TestOAIProvider(TestCase):
         # Fake an identify request
         provider = TestProvider()
         request = self.factory.get(self.url, {'verb': 'Identify'})
-        provider.request = request
-        provider.context = {}
-        response = provider.identify()
+        response = provider.dispatch(request)
         # Should include the chosen values for an identify request
         self.assertContains(response, TestProvider.repository_name)
         self.assertContains(response, TestProvider.admin_emails[0])
