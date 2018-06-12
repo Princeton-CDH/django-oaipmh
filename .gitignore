@@ -1,6 +1,7 @@
 # local ignores
 *.sqlite3
 test_settings.py
+!ci/test_settings.py
 
 *.py[cod]
 

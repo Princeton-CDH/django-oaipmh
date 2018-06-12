@@ -27,7 +27,7 @@ setup(
     tests_require=TEST_REQUIREMENTS,
     extras_require={
         'test': TEST_REQUIREMENTS,
-        'docs': ['sphinx']
+        'docs': ['sphinx', 'sphinx-autobuild', 'sphinx_rtd_theme']
     },
     author='CDH @ Princeton',
     author_email='digitalhumanities@princeton.edu',

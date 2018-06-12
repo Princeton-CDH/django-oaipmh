@@ -23,19 +23,19 @@ class OAIProvider(TemplateView):
     ]
 
     def dispatch(self, request, *args, **kwargs):
-        '''Pass control to HTTP methods & handle errors.'''
+        '''Call :meth:`get()` or :meth:`post()` & handle errors with :meth:`error()`.'''
         try:
             return super().dispatch(request, *args, **kwargs)
         except OaiPmhExceptions.OaiPmhException as error:
             return self.error(request, error)
 
     def get(self, request, *args, **kwargs):
-        '''Parse GET parameters and send them to `:meth:delegate()`.'''
+        '''Parse GET parameters and send them to :meth:`delegate()`.'''
         request.verb = request.GET.get('verb', None)
-        return self.delegate(request, *args, **kwargs) 
+        return self.delegate(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        '''Parse POST parameters and send them to `:meth:delegate()`.'''
+        '''Parse POST parameters and send them to :meth:`delegate()`.'''
         request.verb = request.POST.get('verb', None)
         return self.delegate(request, *args, **kwargs)   
 

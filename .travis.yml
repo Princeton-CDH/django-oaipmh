@@ -1,13 +1,16 @@
 language: python
 python:
   - '3.6'
+cache: pip
 install:
   - pip install -e .
   - pip install -e '.[test]'
   - pip install codecov
-  - cp ci/testsettings.py testsettings.py
-  - python -c "import uuid; print('SECRET_KEY = \'%s\'' % uuid.uuid4())" >> testsettings.py
+  - cp ci/test_settings.py test_settings.py
+  - python -c "import uuid; print('SECRET_KEY = \'%s\'' % uuid.uuid4())" >> test_settings.py
 script:
   - python -m pytest --cov=django_oaipmh
 after_success:
   - codecov
+notifications:
+  email: false

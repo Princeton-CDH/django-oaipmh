@@ -6,6 +6,9 @@ django-oaipmh
 .. image:: https://travis-ci.org/Princeton-CDH/django-oaipmh.svg?branch=master
    :target: https://travis-ci.org/Princeton-CDH/django-oaipmh
    :alt: Build Status
+.. image:: https://readthedocs.org/projects/django-oaipmh/badge/?version=latest
+   :target: https://django-oaipmh.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
 .. image:: https://codecov.io/gh/Princeton-CDH/django-oaipmh/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/Princeton-CDH/django-oaipmh
    :alt: Code Coverage
