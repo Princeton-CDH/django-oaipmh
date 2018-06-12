@@ -52,9 +52,9 @@ class OAIProvider(TemplateView):
         # save request for use in other functions
         self.request = request
         # request URL is needed for every response
-        url = self.request.build_absolute_uri(self.request.path)
+        self.url = self.request.build_absolute_uri(self.request.path)
         # create context to pass to handlers to modify
-        self.context = {'url': url}
+        self.context = {'url': self.url}
         # handle errors
         try:
             return super().dispatch(request, *args, **kwargs)
@@ -101,17 +101,17 @@ class OAIProvider(TemplateView):
 
 
     def identify(self):
+        # TODO there are also <description> containers which can live here.
+        # TODO support for compression algorithms:
+        # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Encoding
         self.template_name = 'django_oaipmh/identify.xml'
         self.context.update({
             'repositoryName': self.repository_name,
+            'baseUrl': self.url,
             'adminEmails': self.admin_emails,
-            'earliestDatestamp': None,
+            'earliestDatestamp': None, #TODO derive from queryset
             'deletedRecord': self.deleted_record,
-            'granularity': self.granularity,
-            'identifierScheme': None,
-            'repositoryIdentifier': None,
-            'identifierDelimiter': None,
-            'sampleIdentifier': None
+            'granularity': self.granularity
         })
         return self.render_to_response(self.context)
 

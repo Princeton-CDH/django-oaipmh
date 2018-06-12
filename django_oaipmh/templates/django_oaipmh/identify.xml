@@ -11,17 +11,5 @@
     <earliestDatestamp>{{ earliestDatestamp }}</earliestDatestamp>
     <deletedRecord>{{ deletedRecord }}</deletedRecord>
     <granularity>{{ granularity }}</granularity>
-    <compression>{{ compression }}</compression>
-    <description>
-      <oai-identifier
-        xmlns="http://www.openarchives.org/OAI/2.0/oai-identifier"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai-identifier http://www.openarchives.org/OAI/2.0/oai-identifier.xsd">
-        <scheme>{{ identifierScheme }}</scheme>
-        <repositoryIdentifier>{{ repositoryIdentifier }}</repositoryIdentifier>
-        <delimiter>{{ identifierDelimiter }}</delimiter>
-        <sampleIdentifier>{{ sampleIdentifier }}</sampleIdentifier>
-      </oai-identifier>
-    </description>
  </Identify>
 {% endblock %}
