@@ -1,0 +1,314 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>django_oaipmh.models &mdash; django-oaipmh 0.1.0-dev documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> django-oaipmh
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1.0-dev
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../codedocs.html">Code Documentation</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">django-oaipmh</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>django_oaipmh.models</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for django_oaipmh.models</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Models for exposing OAI-PMH harvestable metadata from objects.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">chain</span>
+
+<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="k">import</span> <span class="n">Manager</span>
+
+<span class="kn">from</span> <span class="nn">django_oaipmh.exceptions</span> <span class="k">import</span> <span class="n">CannotDisseminateFormat</span><span class="p">,</span> <span class="n">IDDoesNotExist</span>
+
+
+<div class="viewcode-block" id="OAIItemManager"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.models.OAIItemManager">[docs]</a><span class="k">class</span> <span class="nc">OAIItemManager</span><span class="p">(</span><span class="n">Manager</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Manager that can aggregate and filter :class:`OAIItem` s.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="OAIItemManager.all"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.models.OAIItemManager.all">[docs]</a>    <span class="k">def</span> <span class="nf">all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns an iterable chain object of all :class:`OAIItem` s in the </span>
+<span class="sd">        repository.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">chain</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">model</span><span class="o">.</span><span class="n">get_oai</span><span class="p">()</span> <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">OAIItem</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">()])</span></div>
+
+<div class="viewcode-block" id="OAIItemManager.get"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.models.OAIItemManager.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identifier</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a single :class:`OAIItem` by its identifier.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">oai_identifier</span><span class="p">()</span> <span class="o">==</span> <span class="n">identifier</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">item</span>
+        <span class="k">raise</span> <span class="n">IDDoesNotExist</span><span class="p">(</span><span class="s1">&#39;No item found for identifier: </span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">identifier</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="OAISetManager"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.models.OAISetManager">[docs]</a><span class="k">class</span> <span class="nc">OAISetManager</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Manager that can aggregate and filter :class:`OAISet` s.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="OAISetManager.all"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.models.OAISetManager.all">[docs]</a>    <span class="k">def</span> <span class="nf">all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a list of all :class:`OAISet` s in the repository.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">chain</span><span class="p">([</span><span class="n">model</span><span class="o">.</span><span class="n">get_oai</span><span class="p">()</span> <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">OAISet</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">()]))</span></div></div>
+
+
+<div class="viewcode-block" id="OAIItem"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.models.OAIItem">[docs]</a><span class="k">class</span> <span class="nc">OAIItem</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Mixin used to indicate that a given class can expose its metadata</span>
+<span class="sd">    for harvest via an :class:`django_oaipmh.views.OAIProvider`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">objects</span> <span class="o">=</span> <span class="n">OAIItemManager</span><span class="p">()</span>
+
+<div class="viewcode-block" id="OAIItem.get_oai"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.models.OAIItem.get_oai">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_oai</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Should return an iterable comprising the set of all :class:`OAIItem` </span>
+<span class="sd">        s of a given type. Default implementation is Django&#39;s `objects.all()`;</span>
+<span class="sd">        override to customize.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="OAIItem.get_oai_record"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.models.OAIItem.get_oai_record">[docs]</a>    <span class="k">def</span> <span class="nf">get_oai_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata_prefix</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Retrieve an XML metadata object for the item in a specified format.</span>
+<span class="sd">        Requires a method of the form get_oai_record_[format] to be implemented</span>
+<span class="sd">        for each format.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;get_oai_record_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">metadata_prefix</span><span class="p">))()</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">CannotDisseminateFormat</span><span class="p">(</span><span class="s1">&#39;Item doesn</span><span class="se">\&#39;</span><span class="s1">t support format </span><span class="se">\&#39;</span><span class="si">%s</span><span class="se">\&#39;</span><span class="s1">.&#39;</span>
+                                          <span class="o">%</span> <span class="n">metadata_prefix</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="OAIItem.oai_identifier"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.models.OAIItem.oai_identifier">[docs]</a>    <span class="k">def</span> <span class="nf">oai_identifier</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Override to return a unique identifier for the item. See the `OAI</span>
+<span class="sd">        guidelines &lt;ttp://www.openarchives.org/OAI/2.0/guidelines-oai-identifier.htm&gt;`_ </span>
+<span class="sd">        for more information on identifier formats.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="OAIItem.oai_datestamp"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.models.OAIItem.oai_datestamp">[docs]</a>    <span class="k">def</span> <span class="nf">oai_datestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Override to return a modification date/timestamp. Supported formats</span>
+<span class="sd">        are ``YYYY-MM-DD``, ``YYYY-MM-DDThh:mm:ssZ``. Should match the granularity</span>
+<span class="sd">        specified by the :class:`django_oaipmh.views.OAIProvider` that will</span>
+<span class="sd">        expose this item.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="OAIItem.oai_sets"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.models.OAIItem.oai_sets">[docs]</a>    <span class="k">def</span> <span class="nf">oai_sets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Override to return an iterable of :class:`OAISet` (s) that the item </span>
+<span class="sd">        belongs to.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div></div>
+
+
+<div class="viewcode-block" id="OAISet"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.models.OAISet">[docs]</a><span class="k">class</span> <span class="nc">OAISet</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Mixin used to indicate that a given class is an OAI set.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="OAISet.get_oai"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.models.OAISet.get_oai">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_oai</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Should return an iterable comprising the set of all :class:`OAISet` </span>
+<span class="sd">        s of a given type. Default implementation is Django&#39;s `objects.all()`;</span>
+<span class="sd">        override to customize.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="OAISet.oai_sets"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.models.OAISet.oai_sets">[docs]</a>    <span class="k">def</span> <span class="nf">oai_sets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Override to return an iterable of :class:`OAISet` (s) that the set </span>
+<span class="sd">        belongs to.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="OAISet.oai_items"><a class="viewcode-back" href="../../codedocs.html#django_oaipmh.models.OAISet.oai_items">[docs]</a>    <span class="k">def</span> <span class="nf">oai_items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Override to return an iterable of this set&#39;s :class:`OAIItem` s.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Center for Digital Humanities @ Princeton.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.1.0-dev',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

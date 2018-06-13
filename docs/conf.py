@@ -172,4 +172,5 @@ texinfo_documents = [
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'django': ('http://django.readthedocs.org/en/latest/', None),
+    'eulxml': ('http://eulxml.readthedocs.io/en/latest/objects.inv', None),
 }

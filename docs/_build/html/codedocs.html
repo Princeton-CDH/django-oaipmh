@@ -85,6 +85,7 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Code Documentation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-django_oaipmh.views">Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-django_oaipmh.models">Models</a></li>
 </ul>
 </li>
 </ul>
@@ -191,6 +192,115 @@ handler.</p>
 <dt id="django_oaipmh.views.OAIProvider.validate_config">
 <code class="descname">validate_config</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/django_oaipmh/views.html#OAIProvider.validate_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.views.OAIProvider.validate_config" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check that the provider configuration is valid.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-django_oaipmh.models">
+<span id="models"></span><h2>Models<a class="headerlink" href="#module-django_oaipmh.models" title="Permalink to this headline">¶</a></h2>
+<p>Models for exposing OAI-PMH harvestable metadata from objects.</p>
+<dl class="class">
+<dt id="django_oaipmh.models.OAIItem">
+<em class="property">class </em><code class="descclassname">django_oaipmh.models.</code><code class="descname">OAIItem</code><a class="reference internal" href="_modules/django_oaipmh/models.html#OAIItem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.models.OAIItem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mixin used to indicate that a given class can expose its metadata
+for harvest via an <a class="reference internal" href="#django_oaipmh.views.OAIProvider" title="django_oaipmh.views.OAIProvider"><code class="xref py py-class docutils literal notranslate"><span class="pre">django_oaipmh.views.OAIProvider</span></code></a>.</p>
+<dl class="classmethod">
+<dt id="django_oaipmh.models.OAIItem.get_oai">
+<em class="property">classmethod </em><code class="descname">get_oai</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/django_oaipmh/models.html#OAIItem.get_oai"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.models.OAIItem.get_oai" title="Permalink to this definition">¶</a></dt>
+<dd><p>Should return an iterable comprising the set of all <a class="reference internal" href="#django_oaipmh.models.OAIItem" title="django_oaipmh.models.OAIItem"><code class="xref py py-class docutils literal notranslate"><span class="pre">OAIItem</span></code></a> 
+s of a given type. Default implementation is Django’s <cite>objects.all()</cite>;
+override to customize.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="django_oaipmh.models.OAIItem.get_oai_record">
+<code class="descname">get_oai_record</code><span class="sig-paren">(</span><em>metadata_prefix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/django_oaipmh/models.html#OAIItem.get_oai_record"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.models.OAIItem.get_oai_record" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve an XML metadata object for the item in a specified format.
+Requires a method of the form get_oai_record_[format] to be implemented
+for each format.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="django_oaipmh.models.OAIItem.oai_datestamp">
+<code class="descname">oai_datestamp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/django_oaipmh/models.html#OAIItem.oai_datestamp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.models.OAIItem.oai_datestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override to return a modification date/timestamp. Supported formats
+are <code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD</span></code>, <code class="docutils literal notranslate"><span class="pre">YYYY-MM-DDThh:mm:ssZ</span></code>. Should match the granularity
+specified by the <a class="reference internal" href="#django_oaipmh.views.OAIProvider" title="django_oaipmh.views.OAIProvider"><code class="xref py py-class docutils literal notranslate"><span class="pre">django_oaipmh.views.OAIProvider</span></code></a> that will
+expose this item.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="django_oaipmh.models.OAIItem.oai_identifier">
+<code class="descname">oai_identifier</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/django_oaipmh/models.html#OAIItem.oai_identifier"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.models.OAIItem.oai_identifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override to return a unique identifier for the item. See the <a class="reference external" href="ttp://www.openarchives.org/OAI/2.0/guidelines-oai-identifier.htm">OAI
+guidelines</a> 
+for more information on identifier formats.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="django_oaipmh.models.OAIItem.oai_sets">
+<code class="descname">oai_sets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/django_oaipmh/models.html#OAIItem.oai_sets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.models.OAIItem.oai_sets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override to return an iterable of <a class="reference internal" href="#django_oaipmh.models.OAISet" title="django_oaipmh.models.OAISet"><code class="xref py py-class docutils literal notranslate"><span class="pre">OAISet</span></code></a> (s) that the item 
+belongs to.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="django_oaipmh.models.OAIItemManager">
+<em class="property">class </em><code class="descclassname">django_oaipmh.models.</code><code class="descname">OAIItemManager</code><a class="reference internal" href="_modules/django_oaipmh/models.html#OAIItemManager"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.models.OAIItemManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Manager that can aggregate and filter <a class="reference internal" href="#django_oaipmh.models.OAIItem" title="django_oaipmh.models.OAIItem"><code class="xref py py-class docutils literal notranslate"><span class="pre">OAIItem</span></code></a> s.</p>
+<dl class="method">
+<dt id="django_oaipmh.models.OAIItemManager.all">
+<code class="descname">all</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/django_oaipmh/models.html#OAIItemManager.all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.models.OAIItemManager.all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an iterable chain object of all <a class="reference internal" href="#django_oaipmh.models.OAIItem" title="django_oaipmh.models.OAIItem"><code class="xref py py-class docutils literal notranslate"><span class="pre">OAIItem</span></code></a> s in the 
+repository.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="django_oaipmh.models.OAIItemManager.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>identifier</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/django_oaipmh/models.html#OAIItemManager.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.models.OAIItemManager.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a single <a class="reference internal" href="#django_oaipmh.models.OAIItem" title="django_oaipmh.models.OAIItem"><code class="xref py py-class docutils literal notranslate"><span class="pre">OAIItem</span></code></a> by its identifier.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="django_oaipmh.models.OAISet">
+<em class="property">class </em><code class="descclassname">django_oaipmh.models.</code><code class="descname">OAISet</code><a class="reference internal" href="_modules/django_oaipmh/models.html#OAISet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.models.OAISet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mixin used to indicate that a given class is an OAI set.</p>
+<dl class="classmethod">
+<dt id="django_oaipmh.models.OAISet.get_oai">
+<em class="property">classmethod </em><code class="descname">get_oai</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/django_oaipmh/models.html#OAISet.get_oai"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.models.OAISet.get_oai" title="Permalink to this definition">¶</a></dt>
+<dd><p>Should return an iterable comprising the set of all <a class="reference internal" href="#django_oaipmh.models.OAISet" title="django_oaipmh.models.OAISet"><code class="xref py py-class docutils literal notranslate"><span class="pre">OAISet</span></code></a> 
+s of a given type. Default implementation is Django’s <cite>objects.all()</cite>;
+override to customize.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="django_oaipmh.models.OAISet.oai_items">
+<code class="descname">oai_items</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/django_oaipmh/models.html#OAISet.oai_items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.models.OAISet.oai_items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override to return an iterable of this set’s <a class="reference internal" href="#django_oaipmh.models.OAIItem" title="django_oaipmh.models.OAIItem"><code class="xref py py-class docutils literal notranslate"><span class="pre">OAIItem</span></code></a> s.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="django_oaipmh.models.OAISet.oai_sets">
+<code class="descname">oai_sets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/django_oaipmh/models.html#OAISet.oai_sets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.models.OAISet.oai_sets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override to return an iterable of <a class="reference internal" href="#django_oaipmh.models.OAISet" title="django_oaipmh.models.OAISet"><code class="xref py py-class docutils literal notranslate"><span class="pre">OAISet</span></code></a> (s) that the set 
+belongs to.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="django_oaipmh.models.OAISetManager">
+<em class="property">class </em><code class="descclassname">django_oaipmh.models.</code><code class="descname">OAISetManager</code><a class="reference internal" href="_modules/django_oaipmh/models.html#OAISetManager"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.models.OAISetManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Manager that can aggregate and filter <a class="reference internal" href="#django_oaipmh.models.OAISet" title="django_oaipmh.models.OAISet"><code class="xref py py-class docutils literal notranslate"><span class="pre">OAISet</span></code></a> s.</p>
+<dl class="method">
+<dt id="django_oaipmh.models.OAISetManager.all">
+<code class="descname">all</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/django_oaipmh/models.html#OAISetManager.all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#django_oaipmh.models.OAISetManager.all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of all <a class="reference internal" href="#django_oaipmh.models.OAISet" title="django_oaipmh.models.OAISet"><code class="xref py py-class docutils literal notranslate"><span class="pre">OAISet</span></code></a> s in the repository.</p>
 </dd></dl>
 
 </dd></dl>
