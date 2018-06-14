@@ -1,8 +1,14 @@
-from django.test import TestCase, Client, RequestFactory
+from unittest.mock import patch, Mock
+
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
+from eulxml.xmlmap.dc import DublinCore
+
+from django_oaipmh.exceptions import (BadArgument, IDDoesNotExist,
+                                      OAIPMHException)
 from django_oaipmh.views import OAIProvider
-from django_oaipmh.exceptions import OAIPMHException
+from django_oaipmh.models import OAIItem
 
 class TestOAIProvider(TestCase):
 
@@ -59,7 +65,7 @@ class TestOAIProvider(TestCase):
 
 
     def test_identify(self):
-        # Test that the default implementation renders identify.xml
+        # Should render identify.xml
         response = self.client.get(self.url, {'verb': 'Identify'})
         self.assertTemplateUsed(response, 'django_oaipmh/identify.xml')
         # Create an implementation with some customized values
@@ -81,15 +87,59 @@ class TestOAIProvider(TestCase):
 
 
     def test_list_identifiers(self):
-    # Test that the default implementation renders list_identifiers.xml
+        # Should render list_identifiers.xml
         response = self.client.get(self.url, {'verb': 'ListIdentifiers'})
         self.assertTemplateUsed(response, 'django_oaipmh/list_identifiers.xml')
 
 
     def test_get_record(self):
-        with self.assertRaises(NotImplementedError):
-            self.client.get(self.url, {'verb': 'GetRecord'})
-
+        # Should render get_record.xml
+        response = self.client.get(self.url, {'verb': 'GetRecord'})
+        self.assertTemplateUsed(response, 'django_oaipmh/get_record.xml') 
+        # Instantiate the default implementation for testing
+        provider = OAIProvider()
+        provider.context = {}
+        # Missing arguments should raise BadArgument
+        with self.assertRaises(BadArgument): # no id or prefix
+            provider.params = {'verb': 'GetRecord'}
+            response = provider.get_record()
+        with self.assertRaises(BadArgument): # id, no prefix
+            provider.params = {'verb': 'GetRecord', 'identifier': 'some_id'}
+            response = provider.get_record()
+        with self.assertRaises(BadArgument): # prefix, no id
+            provider.params = {'verb': 'GetRecord', 'metadataPrefix': 'dc'}
+            response = provider.get_record()
+        # Request for nonexistent identifier should raise IDDoesNotExist
+        with self.assertRaises(IDDoesNotExist):
+            provider.params = {'verb': 'GetRecord', 'metadataPrefix': 'dc',
+                               'identifier': 'some_id'}
+            response = provider.get_record()   
+        # Create an item...can't use Mock() because templates call str() on it
+        item = OAIItem()
+        item.oai_identifier = 'some_id'
+        item.oai_sets = ['one', 'two']
+        item.oai_datestamp = '1990-05-03'
+        # Create some fake metadata
+        metadata = DublinCore()
+        metadata.title = 'my title'
+        metadata.creator = 'mr. creator'
+        item.get_oai_record = Mock(return_value=metadata)
+        # Should try to retrieve the item via its manager
+        with patch.object(OAIItem.objects, 'get', return_value=item) as get_item:
+            response = self.client.get(self.url, {'verb': 'GetRecord',
+                                                  'metadataPrefix': 'dc',
+                                                  'identifier': 'some_id'})
+            assert get_item.called_once_with('some_id')
+        # Should try to retrieve the specified metadata format via the item
+        assert item.get_oai_record.called_once_with('dc')
+        # Should render all parts of record header
+        self.assertContains(response, '<identifier>some_id</identifier>')
+        self.assertContains(response, '<datestamp>1990-05-03</datestamp>')
+        self.assertContains(response, '<setSpec>one</setSpec>')
+        self.assertContains(response, '<setSpec>two</setSpec>')
+        # Should render metadata in the specified format
+        self.assertContains(response, '<dc:title>my title</dc:title>')
+        self.assertContains(response, '<dc:creator>mr. creator</dc:creator>')
 
     def test_list_metadata_formats(self):
         with self.assertRaises(NotImplementedError):

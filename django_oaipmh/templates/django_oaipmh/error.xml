@@ -1,5 +1,0 @@
-{% extends "django_oaipmh/base.xml" %}
-
-{% block content %}
-  <error code="{{ code }}">{{ message }}</error>
-{% endblock %}

@@ -4,6 +4,10 @@
          xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/
          http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
   <responseDate>{% now 'c' %}</responseDate>
-  <request{% if verb %} verb="{{ verb }}"{% endif %}>{{ url }}</request>
-  {% block content %}{% endblock %}
+  {% block content %}
+  <request>{{ url }}</request>
+  {% if error %}
+  <error code="{{ error.code }}">{{ error.message }}</error>
+  {% endif %}
+  {% endblock %}
 </OAI-PMH>
