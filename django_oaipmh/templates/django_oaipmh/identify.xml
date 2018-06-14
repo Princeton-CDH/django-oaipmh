@@ -1,15 +1,20 @@
 {% extends "django_oaipmh/base.xml" %}
 
 {% block content %}
-  <Identify>
-    <repositoryName>{{ repositoryName }}</repositoryName>
-    <baseURL>{{ baseUrl }}</baseURL>
-    <protocolVersion>2.0</protocolVersion>
-    {% for email in adminEmails %}
-    <adminEmail>{{ email }}</adminEmail>
-    {% endfor %}
-    <earliestDatestamp>{{ earliestDatestamp }}</earliestDatestamp>
-    <deletedRecord>{{ deletedRecord }}</deletedRecord>
-    <granularity>{{ granularity }}</granularity>
- </Identify>
+<request verb="{{ verb }}">{{ url }}</request>
+{% if error %}
+<error code="{{ error.code }}">{{ error.message }}</error>
+{% else %}
+<Identify>
+		<repositoryName>{{ repositoryName }}</repositoryName>
+		<baseURL>{{ baseUrl }}</baseURL>
+		<protocolVersion>2.0</protocolVersion>
+		{% for email in adminEmails %}
+		<adminEmail>{{ email }}</adminEmail>
+		{% endfor %}
+		<earliestDatestamp>{{ earliestDatestamp }}</earliestDatestamp>
+		<deletedRecord>{{ deletedRecord }}</deletedRecord>
+		<granularity>{{ granularity }}</granularity>
+</Identify>
+{% endif %}
 {% endblock %}

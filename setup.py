@@ -22,7 +22,8 @@ setup(
     url='https://github.com/Princeton-CDH/django-oaipmh',
     install_requires=[
         'django',
-        'inflection'
+        'inflection',
+        'eulxml'
     ],
     tests_require=TEST_REQUIREMENTS,
     extras_require={

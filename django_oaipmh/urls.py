@@ -1,6 +1,6 @@
-'''
+"""
 Test URL configuration for django_oaipmh
-'''
+"""
 
 from django.urls import path
 from .views import OAIProvider

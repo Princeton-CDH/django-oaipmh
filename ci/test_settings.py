@@ -1,6 +1,6 @@
-'''
+"""
 Minimal Django settings required to run tests.
-'''
+"""
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -16,7 +16,7 @@ INSTALLED_APPS = (
     'django_oaipmh',
 )
 
-ROOT_URLCONF = 'django_oaipmh.test_urls'
+ROOT_URLCONF = 'django_oaipmh.urls'
 
 TEMPLATES = [
     {

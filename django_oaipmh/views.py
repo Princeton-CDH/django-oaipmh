@@ -1,13 +1,13 @@
-'''
+"""
 Views used to render OAI-PMH response XML.
-'''
+"""
 
 from inflection import underscore
 from django.conf import settings
 from django.views.generic.base import TemplateView
-from django.contrib.sites.shortcuts import get_current_site
 
-from django_oaipmh.exceptions import OAIPMHException, BadVerb
+from django_oaipmh.exceptions import OAIPMHException, BadVerb, BadArgument
+from django_oaipmh.models import OAIItem
 
 class OAIProvider(TemplateView):
     content_type = 'text/xml'
@@ -32,13 +32,13 @@ class OAIProvider(TemplateView):
     GRANULARITIES = ['YYYY-MM-DD', 'YYYY-MM-DDThh:mm:ssZ']
 
     def __init__(self, *args, **kwargs):
-        '''Call :meth:`validate_config()` and initialize the view.'''
+        """Call :meth:`validate_config()` and initialize the view."""
         self.validate_config()
         super().__init__(*args, **kwargs)
 
 
     def validate_config(self):
-        '''Check that the provider configuration is valid.'''
+        """Check that the provider configuration is valid."""
         if self.deleted_record not in self.DELETED_RECORD_STRATEGIES:
             raise OAIPMHException('Invalid value for deleted_record.')
         if self.granularity not in self.GRANULARITIES:
@@ -47,8 +47,8 @@ class OAIProvider(TemplateView):
 
 
     def dispatch(self, request, *args, **kwargs):
-        '''Call :meth:`get()` or :meth:`post()` & handle errors with
-        :meth:`error()`.'''
+        """Call :meth:`get()` or :meth:`post()` & handle errors with
+        :meth:`error()`."""
         # save request for use in other functions
         self.request = request
         # request URL is needed for every response
@@ -63,20 +63,22 @@ class OAIProvider(TemplateView):
 
 
     def get(self, request, *args, **kwargs):
-        '''Parse GET parameters and send them to :meth:`delegate()`.'''
+        """Parse GET parameters and send them to :meth:`delegate()`."""
         verb = request.GET.get('verb', None)
+        self.params = request.GET
         return self.delegate(verb)
 
 
     def post(self, request, *args, **kwargs):
-        '''Parse POST parameters and send them to :meth:`delegate()`.'''
+        """Parse POST parameters and send them to :meth:`delegate()`."""
         verb = request.POST.get('verb', None)
+        self.params = request.POST
         return self.delegate(verb)
 
 
     def delegate(self, verb):
-        '''Determine the verb, add it to the context and pass to the appropriate
-        handler.'''
+        """Determine the verb, add it to the context and pass to the appropriate
+        handler."""
         if verb is None:
             raise BadVerb('Verb is required.')
         if verb not in self.OAI_VERBS:
@@ -88,10 +90,11 @@ class OAIProvider(TemplateView):
 
 
     def error(self, error):
-        self.template_name = 'django_oaipmh/error.xml'
         self.context.update({
-            'code': error.code,
-            'message': str(error)
+            'error': {
+                'code': error.code,
+                'message': str(error)
+            }
         })
         return self.render_to_response(self.context)
 
@@ -133,7 +136,32 @@ class OAIProvider(TemplateView):
         # return self.render_to_response({'items': items})
 
     def get_record(self):
-        raise NotImplementedError
+        self.template_name = 'django_oaipmh/get_record.xml'
+        # check that we got an identifier and a metadataPrefix
+        identifier = self.params.get('identifier', None)
+        metadata_prefix = self.params.get('metadataPrefix', None)
+        # we need them in context even if there's an error
+        self.context.update({
+            'identifier': identifier,
+            'metadataPrefix': metadata_prefix
+        })
+        # throw the appropriate error
+        if not identifier:
+            raise BadArgument('OAI identifier is required.')
+        if not metadata_prefix:
+            raise BadArgument('Metadata prefix is required.')
+        # try to find the item
+        item = OAIItem.objects.get(identifier)
+        print(item.oai_sets())
+        # try to retrieve the item's record
+        record = item.get_oai_record(metadata_prefix)
+        # update the context and render the response
+        self.context.update({
+            'item': item,
+            'metadata': record.serialize(pretty=True).decode()
+        })
+        return self.render_to_response(self.context)
+
 
     def list_metadata_formats(self):
         raise NotImplementedError

@@ -1,7 +1,7 @@
-'''
+"""
 Exception subclasses specific to OAI-PMH.
 http://www.openarchives.org/OAI/openarchivesprotocol.html#ErrorConditions
-'''
+"""
 
 class OAIPMHException(Exception):
     pass
@@ -9,11 +9,11 @@ class OAIPMHException(Exception):
 
 class BadArgument(OAIPMHException):
     code = 'badArgument'
-    message = '''
+    message = """
     The request includes illegal arguments, is missing required arguments, 
     includes a repeated argument, or values for arguments have an illegal 
     syntax.
-    '''
+    """
 
 
 class BadResumptionToken(OAIPMHException):
@@ -23,34 +23,34 @@ class BadResumptionToken(OAIPMHException):
 
 class BadVerb(OAIPMHException):
     code = 'badVerb'
-    message = '''
+    message = """
     Value of the verb argument is not a legal OAI-PMH verb, the verb
     argument is missing, or the verb argument is repeated.
-    '''
+    """
 
 
 class CannotDisseminateFormat(OAIPMHException):
     code = 'cannotDisseminateFormat'
-    message = '''
+    message = """
     The metadata format identified by the value given for the metadataPrefix
     argument is not supported by the item or by the repository.
-    '''
+    """
 
 
-class IdDoesNotExist(OAIPMHException):
+class IDDoesNotExist(OAIPMHException):
     code = 'idDoesNotExist'
-    message = '''
+    message = """
     The value of the identifier argument is unknown or illegal in this 
     repository.
-    '''
+    """
 
 
 class NoRecordsMatch(OAIPMHException):
     code = 'noRecordsMatch'
-    message = '''
+    message = """
     The combination of the values of the from, until, set and metadataPrefix 
     arguments results in an empty list.
-    '''
+    """
 
 
 class NoMetadataFormats(OAIPMHException):
@@ -61,8 +61,3 @@ class NoMetadataFormats(OAIPMHException):
 class NoSetHierarchy(OAIPMHException):
     code = 'noSetHierarchy'
     message = 'The repository does not support sets.'
-
-
-
-
-

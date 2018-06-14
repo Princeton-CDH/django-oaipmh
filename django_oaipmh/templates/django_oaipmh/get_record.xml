@@ -1,0 +1,25 @@
+{% extends "django_oaipmh/base.xml" %}
+
+{% block content %}
+<request verb="{{ verb }}" 
+         identifier="{{ identifier }}"
+         metadataPrefix="{{ metadataPrefix }}">{{ url }}</request>
+{% if error %}
+<error code="{{ error.code }}">{{ error.message }}</error>
+{% else %}
+<GetRecord>
+    <record>
+        <header>
+            <identifier>{{ item.oai_identifier }}</identifier>
+            <datestamp>{{ item.oai_datestamp }}</datestamp>
+            {% with set=item.oai_sets %}
+            <setSpec>{{ set }}</setSpec>
+            {% endwith %}
+        </header>
+        <metadata>
+        {{ metadata|safe }}
+        </metadata>
+    </record>
+</GetRecord>
+{% endif %}
+{% endblock %}
