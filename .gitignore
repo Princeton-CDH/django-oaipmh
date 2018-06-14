@@ -8,6 +8,9 @@ test_settings.py
 # C extensions
 *.so
 
+# built docs
+docs/
+
 # Packages
 *.egg
 *.egg-info
