@@ -3,6 +3,8 @@ from unittest.mock import patch, Mock
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
+from eulxml.xmlmap.dc import DublinCore
+
 from django_oaipmh.exceptions import (BadArgument, IDDoesNotExist,
                                       OAIPMHException)
 from django_oaipmh.views import OAIProvider
@@ -112,28 +114,32 @@ class TestOAIProvider(TestCase):
             provider.params = {'verb': 'GetRecord', 'metadataPrefix': 'dc',
                                'identifier': 'some_id'}
             response = provider.get_record()   
-        # Create a mock item
-        item = Mock(spec=['oai_identifier', 'oai_sets', 'oai_datestamp'])
-        item.oai_identifer.return_value = 'some_id'
-        item.oai_sets.return_value = ['one', 'two']
-        item.oai_datestamp.return_value = '1990-05-03'
-        print(item.oai_sets())
-        # Request the item's metadata as dublin core
+        # Create an item...can't use Mock() because templates call str() on it
+        item = OAIItem()
+        item.oai_identifier = 'some_id'
+        item.oai_sets = ['one', 'two']
+        item.oai_datestamp = '1990-05-03'
+        # Create some fake metadata
+        metadata = DublinCore()
+        metadata.title = 'my title'
+        metadata.creator = 'mr. creator'
+        item.get_oai_record = Mock(return_value=metadata)
+        # Should try to retrieve the item via its manager
         with patch.object(OAIItem.objects, 'get', return_value=item) as get_item:
             response = self.client.get(self.url, {'verb': 'GetRecord',
                                                   'metadataPrefix': 'dc',
                                                   'identifier': 'some_id'})
-        # Should try to retrieve the item via its manager
             assert get_item.called_once_with('some_id')
         # Should try to retrieve the specified metadata format via the item
-            assert item.get_oai_record.called_once_with('dc')
+        assert item.get_oai_record.called_once_with('dc')
         # Should render all parts of record header
         self.assertContains(response, '<identifier>some_id</identifier>')
         self.assertContains(response, '<datestamp>1990-05-03</datestamp>')
         self.assertContains(response, '<setSpec>one</setSpec>')
         self.assertContains(response, '<setSpec>two</setSpec>')
         # Should render metadata in the specified format
-
+        self.assertContains(response, '<dc:title>my title</dc:title>')
+        self.assertContains(response, '<dc:creator>mr. creator</dc:creator>')
 
     def test_list_metadata_formats(self):
         with self.assertRaises(NotImplementedError):

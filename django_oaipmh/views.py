@@ -152,7 +152,6 @@ class OAIProvider(TemplateView):
             raise BadArgument('Metadata prefix is required.')
         # try to find the item
         item = OAIItem.objects.get(identifier)
-        print(item.oai_sets())
         # try to retrieve the item's record
         record = item.get_oai_record(metadata_prefix)
         # update the context and render the response

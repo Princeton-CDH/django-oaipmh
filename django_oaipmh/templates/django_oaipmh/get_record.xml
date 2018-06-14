@@ -12,9 +12,9 @@
         <header>
             <identifier>{{ item.oai_identifier }}</identifier>
             <datestamp>{{ item.oai_datestamp }}</datestamp>
-            {% with set=item.oai_sets %}
+            {% for set in item.oai_sets %}
             <setSpec>{{ set }}</setSpec>
-            {% endwith %}
+            {% endfor %}
         </header>
         <metadata>
         {{ metadata|safe }}
