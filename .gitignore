@@ -9,7 +9,7 @@ test_settings.py
 *.so
 
 # built docs
-docs/
+docs/_build
 
 # Packages
 *.egg
