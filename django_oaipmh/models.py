@@ -8,47 +8,42 @@ from django_oaipmh.exceptions import CannotDisseminateFormat, IDDoesNotExist
 
 
 class OAIItemManager(Manager):
-    """Manager that can aggregate and filter :class:`OAIItem` s."""
-
+    """Manager that can aggregate :class:`OAIItem` s."""
+    
     def all(self):
         """Returns an iterable chain object of all :class:`OAIItem` s in the
         repository.
         """
-        return chain(*[model.get_oai() for model in OAIItem.__subclasses__()])
+        return chain(*[model.get_oai_queryset() for model in OAIItem.__subclasses__()])
 
     def get(self, identifier):
-        """Returns a single :class:`OAIItem` by its identifier."""
-        for item in self.all():
-            if item.oai_identifier() == identifier:
-                return item
-        raise IDDoesNotExist('No item found for identifier: {}.'.format(identifier))
-
-
-class OAISetManager():
-    """Manager that can aggregate and filter :class:`OAISet` s."""
-
-    def all(self):
-        """Returns a list of all :class:`OAISet` s in the repository."""
-        return list(chain([model.get_oai() for model in OAISet.__subclasses__()]))
+            """Returns a single item by its identifier."""
+            for item in self.all():
+                if item.oai_identifier() == identifier:
+                    return item
+            raise IDDoesNotExist('No item found for identifier: {}.'.format(identifier))
 
 
 class OAIItem(object):
-    """Mixin used to indicate that a given class can expose its metadata
-    for harvest via an :class:`django_oaipmh.views.OAIProvider`.
+    """Interface used to indicate that a given subclass is an OAI item and can
+    expose its metadata for harvest via an :class:`django_oaipmh.views.OAIProvider`.
+
+    N.B. none of these methods are meant to be called directly on OAIItem - 
+    only on a subclass or instance.
+
+    Example: calling OAIItem.objects.all() will use the OAIItemManager to call
+    get_oai_queryset on all subclasses of OAIItem where it should be defined; 
+    we'll never call OAIItem.get_oai_queryset directly.
     """
 
     objects = OAIItemManager()
 
     @classmethod
-    def get_oai(cls):
+    def get_oai_queryset(cls):
         """Should return an iterable comprising the set of all :class:`OAIItem`
-        s of a given type. Default implementation is Django's `objects.all()`;
-        override to customize.
+        s of the given class. Doesn't need to be a :django:class:`QuerySet`.
         """
-        try:
-            return cls.objects.all()
-        except AttributeError:
-            raise NotImplementedError()
+        raise NotImplementedError
 
     def get_oai_record(self, metadata_prefix):
         """Retrieve an XML metadata object for the item in a specified format.
@@ -84,18 +79,18 @@ class OAIItem(object):
 
 
 class OAISet():
-    """Mixin used to indicate that a given class is an OAI set."""
+    """Interface used to indicate that a given subclass is an OAI set and can
+    expose its metadata for harvest via an
+    :class:`django_oaipmh.views.OAIProvider`.
+    """
+    
 
     @classmethod
-    def get_oai(cls):
-        """Should return an iterable comprising the set of all :class:`OAISet`
-        s of a given type. Default implementation is Django's `objects.all()`;
-        override to customize.
+    def get_oai_queryset(cls):
+        """Should return an iterable comprising the set of all :class:`OAISets`
+        s of the given class. Doesn't need to be a :django:class:`QuerySet`.
         """
-        try:
-            return cls.objects.all()
-        except AttributeError:
-            raise NotImplementedError()
+        raise NotImplementedError
 
     def oai_sets(self):
         """Override to return an iterable of :class:`OAISet` (s) that the set

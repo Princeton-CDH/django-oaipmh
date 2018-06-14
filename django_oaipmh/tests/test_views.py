@@ -109,11 +109,6 @@ class TestOAIProvider(TestCase):
         with self.assertRaises(BadArgument): # prefix, no id
             provider.params = {'verb': 'GetRecord', 'metadataPrefix': 'dc'}
             response = provider.get_record()
-        # Request for nonexistent identifier should raise IDDoesNotExist
-        with self.assertRaises(IDDoesNotExist):
-            provider.params = {'verb': 'GetRecord', 'metadataPrefix': 'dc',
-                               'identifier': 'some_id'}
-            response = provider.get_record()   
         # Create an item...can't use Mock() because templates call str() on it
         item = OAIItem()
         item.oai_identifier = 'some_id'
