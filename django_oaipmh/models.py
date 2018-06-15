@@ -7,7 +7,7 @@ from django.core.exceptions import MultipleObjectsReturned
 from django.db.models import Manager, QuerySet
 
 from django_oaipmh.exceptions import (CannotDisseminateFormat, IDDoesNotExist,
-                                      NoRecordsMatch)
+                                      NoRecordsMatch, BadArgument)
 
 
 class OAIQuerySet(QuerySet):
@@ -26,7 +26,10 @@ class OAIQuerySet(QuerySet):
         # collections/sets come later
 
     def oai_get(self, identifier):
-        return self.filter(id=identifier.split(self.identifier_delimiter)[-1])
+        try:
+            return self.filter(id=identifier.split(self.identifier_delimiter)[-1])
+        except ValueError:
+            raise BadArgument('Couldn\'t parse OAI identifier in request.')
 
 
 class OAIItemManager(Manager):
@@ -42,12 +45,15 @@ class OAIItemManager(Manager):
         """Returns a single item by its identifier."""
         hits = []
         for model in OAIItem.__subclasses__():
-            if model.objects.get(identifier).exists():
-                hits.append(model.objects.oai_get(identifier))
+            # oai_get returns OAIQuerySet which we can cheaply check has members
+            if model.objects.oai_get(identifier).exists():
+                # if it does we want the thing itself not the queryset so we call regular get() on it
+                hits.append(model.objects.oai_get(identifier).get())
         if not hits:
             raise IDDoesNotExist('No item found for identifier: {}.'.format(identifier))
         if len(hits) > 1:
             raise MultipleObjectsReturned('Multiple items found for identifier: {}.'.format(identifier))
+        # list with one item; return it
         return hits[0]
 
     def filter(self, from_str=None, until_str=None, metadata_prefix=None, set=None):
