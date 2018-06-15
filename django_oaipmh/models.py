@@ -1,10 +1,35 @@
 """Models for exposing OAI-PMH harvestable metadata from objects."""
 
 from itertools import chain
+from dateutil import parser
 
-from django.db.models import Manager
+from django.core.exceptions import MultipleObjectsReturned
+from django.db.models import Manager, QuerySet
 
-from django_oaipmh.exceptions import CannotDisseminateFormat, IDDoesNotExist
+from django_oaipmh.exceptions import (CannotDisseminateFormat, IDDoesNotExist,
+                                      NoRecordsMatch, BadArgument)
+
+
+class OAIQuerySet(QuerySet):
+
+    oai_datestamp = 'modified_at'
+    identifier_delimiter = ':'
+    
+    def oai_filter(self, from_dt=None, until_dt=None, md_prefix=None, set=None):
+        filters = {}
+        if from_dt:
+            filters['{}__gt'.format(self.oai_datestamp)] = from_dt
+        if until_dt:
+            filters['{}__lt'.format(self.oai_datestamp)] = until_dt
+        return self.filter(**filters)
+        # md_prefix not needed because everything's DC
+        # collections/sets come later
+
+    def oai_get(self, identifier):
+        try:
+            return self.filter(id=identifier.split(self.identifier_delimiter)[-1])
+        except ValueError:
+            raise BadArgument('Couldn\'t parse OAI identifier in request.')
 
 
 class OAIItemManager(Manager):
@@ -14,14 +39,31 @@ class OAIItemManager(Manager):
         """Returns an iterable chain object of all :class:`OAIItem` s in the
         repository.
         """
-        return chain(*[model.get_oai_queryset() for model in OAIItem.__subclasses__()])
+        return self.filter()
 
     def get(self, identifier):
-            """Returns a single item by its identifier."""
-            for item in self.all():
-                if item.oai_identifier() == identifier:
-                    return item
+        """Returns a single item by its identifier."""
+        hits = []
+        for model in OAIItem.__subclasses__():
+            # oai_get returns OAIQuerySet which we can cheaply check has members
+            if model.objects.oai_get(identifier).exists():
+                # if it does we want the thing itself not the queryset so we call regular get() on it
+                hits.append(model.objects.oai_get(identifier).get())
+        if not hits:
             raise IDDoesNotExist('No item found for identifier: {}.'.format(identifier))
+        if len(hits) > 1:
+            raise MultipleObjectsReturned('Multiple items found for identifier: {}.'.format(identifier))
+        # list with one item; return it
+        return hits[0]
+
+    def filter(self, from_str=None, until_str=None, metadata_prefix=None, set=None):
+        from_dt = parser.parse(from_str) if from_str else None
+        until_dt = parser.parse(until_str) if until_str else None
+        qs_set = [model.objects.oai_filter(from_dt=from_dt, until_dt=until_dt) for model in OAIItem.__subclasses__()]
+        qs_set = [qs for qs in qs_set if qs.exists()]
+        if not qs_set:
+            raise NoRecordsMatch()
+        return chain(*qs_set)
 
 
 class OAIItem(object):

@@ -1,14 +1,15 @@
-from unittest.mock import patch, Mock
+import datetime
+from unittest.mock import Mock, patch
 
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
-
+from django.utils.dateformat import format as dateformat
 from eulxml.xmlmap.dc import DublinCore
 
-from django_oaipmh.exceptions import (BadArgument, IDDoesNotExist,
-                                      OAIPMHException)
-from django_oaipmh.views import OAIProvider
+from django_oaipmh.exceptions import BadArgument, OAIPMHException
 from django_oaipmh.models import OAIItem
+from django_oaipmh.views import OAIProvider
+
 
 class TestOAIProvider(TestCase):
 
@@ -90,7 +91,17 @@ class TestOAIProvider(TestCase):
         # Should render list_identifiers.xml
         response = self.client.get(self.url, {'verb': 'ListIdentifiers'})
         self.assertTemplateUsed(response, 'django_oaipmh/list_identifiers.xml')
-
+        # TODO Missing arguments should raise BadArgument
+        # TODO Unsupported metadataPrefix should raise CannotDisseminateFormat
+        # TODO If sets unsupported, should raise NoSetHierarchy
+        # TODO Should filter items with a "from" date
+        # TODO Should filter items with a "until" date
+        # TODO Should filter items based metadata availability
+        # TODO Should filter items based on set membership
+        # TODO Should return a resumption token if results are paginated
+        # TODO Should return the next page when requested
+        # TODO Invalid resumptionToken should raise BadResumptionToken
+        # TODO Expired resumptionToken should raise BadResumptionToken
 
     def test_get_record(self):
         # Should render get_record.xml
@@ -113,7 +124,7 @@ class TestOAIProvider(TestCase):
         item = OAIItem()
         item.oai_identifier = 'some_id'
         item.oai_sets = ['one', 'two']
-        item.oai_datestamp = '1990-05-03'
+        item.oai_datestamp = datetime.datetime.now()
         # Create some fake metadata
         metadata = DublinCore()
         metadata.title = 'my title'
@@ -129,7 +140,9 @@ class TestOAIProvider(TestCase):
         assert item.get_oai_record.called_once_with('dc')
         # Should render all parts of record header
         self.assertContains(response, '<identifier>some_id</identifier>')
-        self.assertContains(response, '<datestamp>1990-05-03</datestamp>')
+        self.assertContains(response, '<datestamp>{}</datestamp>'.format(
+            dateformat(item.oai_datestamp, 'c')
+        ))
         self.assertContains(response, '<setSpec>one</setSpec>')
         self.assertContains(response, '<setSpec>two</setSpec>')
         # Should render metadata in the specified format

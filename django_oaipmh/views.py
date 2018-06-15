@@ -121,19 +121,31 @@ class OAIProvider(TemplateView):
 
     def list_identifiers(self):
         self.template_name = 'django_oaipmh/list_identifiers.xml'
+        # TODO handle if we got a resumption token
+        resumption_token = self.params.get('resumptionToken', None)
+        if resumption_token:
+            pass
+        # add other params to context
+        from_str = self.params.get('from', None)
+        until_str = self.params.get('until', None)
+        metadata_prefix = self.params.get('metadataPrefix', None)
+        set_spec = self.params.get('set', None)
+        self.context.update({
+            'from': from_str,
+            'until': until_str,
+            'metadataPrefix': metadata_prefix,
+            'set': set_spec
+        })
+        # check that we got a metadataPrefix
+        if not metadata_prefix:
+            raise BadArgument('Metadata prefix is required.')
+        items = OAIItem.objects.filter(from_str=from_str,
+                                       until_str=until_str,
+                                       metadata_prefix=metadata_prefix,
+                                       set=set_spec)
+        self.context.update({ 'items':items })
         return self.render_to_response(self.context)
-
-        # items = []
-        # # TODO: eventually we will need pagination with oai resumption tokens
-        # # should be able to model similar to django.contrib.sitemap
-        # for i in self.items():
-        #     item_info = {
-        #         'identifier': self.oai_identifier(i),
-        #         'last_modified': self.last_modified(i),
-        #         'sets': self.sets(i)
-        #     }
-        #     items.append(item_info)
-        # return self.render_to_response({'items': items})
+        # TODO paginate if necessary
 
     def get_record(self):
         self.template_name = 'django_oaipmh/get_record.xml'

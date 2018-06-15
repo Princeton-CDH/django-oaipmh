@@ -23,7 +23,8 @@ setup(
     install_requires=[
         'django',
         'inflection',
-        'eulxml'
+        'eulxml',
+        'python-dateutil'
     ],
     tests_require=TEST_REQUIREMENTS,
     extras_require={
