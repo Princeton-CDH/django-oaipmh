@@ -94,6 +94,7 @@ class TestOAIProvider(TestCase):
         # TODO Missing arguments should raise BadArgument
         # TODO Unsupported metadataPrefix should raise CannotDisseminateFormat
         # TODO If sets unsupported, should raise NoSetHierarchy
+        # TODO Should return item headers
         # TODO Should filter items with a "from" date
         # TODO Should filter items with a "until" date
         # TODO Should filter items based metadata availability
@@ -155,8 +156,22 @@ class TestOAIProvider(TestCase):
 
 
     def test_list_records(self):
-        with self.assertRaises(NotImplementedError):
-            self.client.get(self.url, {'verb': 'ListRecords'})
+        # Should render list_identifiers.xml
+        response = self.client.get(self.url, {'verb': 'ListRecords'})
+        self.assertTemplateUsed(response, 'django_oaipmh/list_records.xml')
+        # TODO Missing arguments should raise BadArgument
+        # TODO Unsupported metadataPrefix should raise CannotDisseminateFormat
+        # TODO If sets unsupported, should raise NoSetHierarchy
+        # TODO Should return item headers
+        # TODO Should return item records in correct format
+        # TODO Should filter items with a "from" date
+        # TODO Should filter items with a "until" date
+        # TODO Should filter items based metadata availability
+        # TODO Should filter items based on set membership
+        # TODO Should return a resumption token if results are paginated
+        # TODO Should return the next page when requested
+        # TODO Invalid resumptionToken should raise BadResumptionToken
+        # TODO Expired resumptionToken should raise BadResumptionToken
 
 
     def test_list_sets(self):

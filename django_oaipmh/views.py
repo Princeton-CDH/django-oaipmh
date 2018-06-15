@@ -98,10 +98,10 @@ class OAIProvider(TemplateView):
         })
         return self.render_to_response(self.context)
 
-
-    def get_queryset(self):
-        return []
-
+    @staticmethod
+    def append_metadata(item, xml_obj):
+        item.metadata = xml_obj.serialize(pretty=True).decode()
+        return item
 
     def identify(self):
         # TODO there are also <description> containers which can live here.
@@ -166,11 +166,10 @@ class OAIProvider(TemplateView):
         item = OAIItem.objects.get(identifier)
         # try to retrieve the item's record
         record = item.get_oai_record(metadata_prefix)
+        # add it to the item as XML
+        item.metadata = record.serialize(pretty=True).decode()
         # update the context and render the response
-        self.context.update({
-            'item': item,
-            'metadata': record.serialize(pretty=True).decode()
-        })
+        self.context.update({ 'item': item })
         return self.render_to_response(self.context)
 
 
@@ -178,7 +177,36 @@ class OAIProvider(TemplateView):
         raise NotImplementedError
 
     def list_records(self):
-        raise NotImplementedError
+        self.template_name = 'django_oaipmh/list_records.xml'
+        # TODO handle if we got a resumption token
+        resumption_token = self.params.get('resumptionToken', None)
+        if resumption_token:
+            pass
+        # add other params to context
+        from_str = self.params.get('from', None)
+        until_str = self.params.get('until', None)
+        metadata_prefix = self.params.get('metadataPrefix', None)
+        set_spec = self.params.get('set', None)
+        self.context.update({
+            'from': from_str,
+            'until': until_str,
+            'metadataPrefix': metadata_prefix,
+            'set': set_spec
+        })
+        # check that we got a metadataPrefix
+        if not metadata_prefix:
+            raise BadArgument('Metadata prefix is required.')
+        # try to retrieve matching items
+        items = OAIItem.objects.filter(from_str=from_str,
+                                       until_str=until_str,
+                                       metadata_prefix=metadata_prefix,
+                                       set=set_spec)
+        # create a new iterable with metadata appended to each item
+        items = map(lambda item: self.append_metadata(item, item.get_oai_record(metadata_prefix)), items)
+        # update the context and render
+        self.context.update({ 'items':items })
+        return self.render_to_response(self.context)
+        # TODO paginate if necessary
 
     def list_sets(self):
         raise NotImplementedError
