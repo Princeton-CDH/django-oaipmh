@@ -2,8 +2,9 @@
 
 {% block content %}
 <request verb="{{ verb }}" 
-         identifier="{{ identifier }}"
-         metadataPrefix="{{ metadataPrefix }}">{{ url }}</request>
+        {% if identifier %}identifier="{{ identifier }}" {% endif %}
+        {% if metadataPrefix %}metadataPrefix="{{ metadataPrefix }}" {% endif %}>
+        {{ url }}</request>
 {% if error %}
 <error code="{{ error.code }}">{{ error.message }}</error>
 {% else %}
@@ -11,7 +12,7 @@
     <record>
         <header>
             <identifier>{{ item.oai_identifier }}</identifier>
-            <datestamp>{{ item.oai_datestamp }}</datestamp>
+            <datestamp>{{ item.oai_datestamp|date:'c' }}</datestamp>
             {% for set in item.oai_sets %}
             <setSpec>{{ set }}</setSpec>
             {% endfor %}

@@ -4,7 +4,10 @@ http://www.openarchives.org/OAI/openarchivesprotocol.html#ErrorConditions
 """
 
 class OAIPMHException(Exception):
-    pass
+    message = 'The OAI-PMH repository encountered an error.'
+
+    def __str__(self):
+        return self.message
 
 
 class BadArgument(OAIPMHException):
@@ -47,6 +50,7 @@ class IDDoesNotExist(OAIPMHException):
 
 class NoRecordsMatch(OAIPMHException):
     code = 'noRecordsMatch'
+    
     message = """
     The combination of the values of the from, until, set and metadataPrefix 
     arguments results in an empty list.

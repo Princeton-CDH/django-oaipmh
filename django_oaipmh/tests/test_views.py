@@ -90,7 +90,17 @@ class TestOAIProvider(TestCase):
         # Should render list_identifiers.xml
         response = self.client.get(self.url, {'verb': 'ListIdentifiers'})
         self.assertTemplateUsed(response, 'django_oaipmh/list_identifiers.xml')
-
+        # TODO Missing arguments should raise BadArgument
+        # TODO Unsupported metadataPrefix should raise CannotDisseminateFormat
+        # TODO If sets unsupported, should raise NoSetHierarchy
+        # TODO Should filter items with a "from" date
+        # TODO Should filter items with a "until" date
+        # TODO Should filter items based metadata availability
+        # TODO Should filter items based on set membership
+        # TODO Should return a resumption token if results are paginated
+        # TODO Should return the next page when requested
+        # TODO Invalid resumptionToken should raise BadResumptionToken
+        # TODO Expired resumptionToken should raise BadResumptionToken
 
     def test_get_record(self):
         # Should render get_record.xml
