@@ -12,9 +12,6 @@ django-oaipmh
 .. image:: https://codecov.io/gh/Princeton-CDH/django-oaipmh/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/Princeton-CDH/django-oaipmh
    :alt: Code Coverage
-.. image:: https://landscape.io/github/Princeton-CDH/django-oaipmh/master/landscape.svg?style=flat
-   :target: https://landscape.io/github/Princeton-CDH/django-oaipmh/master
-   :alt: Code Health
 .. image:: https://requires.io/github/Princeton-CDH/django-oaipmh/requirements.svg?branch=master
    :target: https://requires.io/github/Princeton-CDH/django-oaipmh/requirements/?branch=master
    :alt: Requirements Status
