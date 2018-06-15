@@ -6,6 +6,10 @@ http://www.openarchives.org/OAI/openarchivesprotocol.html#ErrorConditions
 class OAIPMHException(Exception):
     message = 'The OAI-PMH repository encountered an error.'
 
+    def __init__(self, message=None):
+        if message:
+            self.message = message
+
     def __str__(self):
         return self.message
 
