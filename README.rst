@@ -106,5 +106,5 @@ configurations.
 
     python -m pytest
 
-OAI provider implementations can be tested using the OAI Repository Explorer 
-(perhaps no longer available?)
+OAI provider implementations can be tested using the `OAI Repository Explorer 
+<http://re.cs.uct.ac.za/>`_.
